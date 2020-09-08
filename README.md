@@ -3,6 +3,7 @@ A rough re-implementation of [Text Level Graph Neural Network for Text Classific
 
 
 > Results on the test set of MR, R8 and R52 
+
 |  MR  |  R8  |  R52  |
 | :--------: | :--------: | :--------: |
 |  74.7  |  91.9  |  83.3  |
