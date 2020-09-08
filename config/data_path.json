@@ -1,0 +1,11 @@
+{
+  "dataset": {
+    "train": "./data/mr/train_set.txt",
+    "test": "./data/mr/test_set.txt"
+  },
+  "pre_embed": {
+    "word_embedding": "./embeddings/glove.6B.100d.txt",
+    "bert_model": "./bert/en_bert",
+    "bert_vocab": "./bert/en_bert/vocab.txt"
+  }
+}
