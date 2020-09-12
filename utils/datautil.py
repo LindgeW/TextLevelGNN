@@ -24,6 +24,16 @@ def create_vocab(data_path):
     return MultiVocab({'word': wd_vocab, 'label': lbl_vocab})
 
 
+def get_neighbors(x_ids, nb_neighbor=2):
+    neighbours = []
+    pad = [0] * nb_neighbor
+    x_ids_ = pad + list(x_ids) + pad
+    for i in range(nb_neighbor, len(x_ids_) - nb_neighbor):
+        x = x_ids_[i-nb_neighbor: i] + x_ids_[i+1: i+nb_neighbor+1]
+        neighbours.append(x)
+    return neighbours
+
+
 def batch_variable(insts, vocabs):
     bs = len(insts)
     nb_nodes = len(vocabs['word']) - 1
@@ -36,28 +46,16 @@ def batch_variable(insts, vocabs):
     for i, inst in enumerate(insts):
         length = len(inst.data)
         x = np.asarray(vocabs['word'].inst2idx(inst.data))
-        y = vocabs['label'].inst2idx(inst.label)
-        nx = get_neighbors(x, 3)
-        # edge weight index
+        nx = np.asarray(get_neighbors(x, 3))
         ew_id = ((x - 1) * nb_nodes).reshape(-1, 1) + nx
-        ew_id[x == 0] = 0
         ew_id[nx == 0] = 0
+        y = vocabs['label'].inst2idx(inst.label)
 
         x_ids[i, :length] = torch.tensor(x)
         nx_ids[i, :length] = torch.tensor(nx)
         ew_ids[i, :length] = torch.tensor(ew_id)
         y_ids[i] = torch.tensor(y)
     return Batch(x_ids, nx_ids, ew_ids, y_ids)
-
-
-def get_neighbors(x_ids, nb_neighbor=2):
-    neighbours = []
-    pad = [0] * nb_neighbor
-    x_ids_ = pad + list(x_ids) + pad
-    for i in range(nb_neighbor, len(x_ids_) - nb_neighbor):
-        x = x_ids_[i-nb_neighbor: i] + x_ids_[i+1: i+nb_neighbor+1]
-        neighbours.append(x)
-    return np.asarray(neighbours)
 
 
 class Batch(object):
@@ -73,3 +71,5 @@ class Batch(object):
         self.ew = self.ew.to(device)
         self.y = self.y.to(device)
         return self
+
+

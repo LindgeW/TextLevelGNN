@@ -25,8 +25,8 @@ class GNNModel(nn.Module):
             self.node_embedding = nn.Embedding(num_node, embedding_dim, padding_idx=0)
             nn.init.xavier_uniform_(self.node_embedding.weight)
 
-        # self.edge_weight = nn.Embedding(num_node * num_node, 1, padding_idx=0)  # edge weight
-        self.edge_weight = nn.Embedding((num_node-1)*(num_node-1)+1, 1, padding_idx=0)   # edge weight
+        # self.edge_weight = nn.Embedding(num_node * num_node+1, 1, padding_idx=0)       # vocab excludes <pad>
+        self.edge_weight = nn.Embedding((num_node-1)*(num_node-1)+1, 1, padding_idx=0)   # vocab includes <pad>
         self.node_weight = nn.Embedding(num_node, 1, padding_idx=0)  # gate control
         self.fc = nn.Sequential(
             nn.Linear(embedding_dim, num_cls),
@@ -52,9 +52,8 @@ class GNNModel(nn.Module):
         Ra = self.node_embedding(NX)
         # edge weight  (bz, seq_len, neighbor_num, 1)
         Ean = self.edge_weight(EW)
-        # Ean = self.edge_weight(NX)
         # neighbor representation  (bz, seq_len, embed_dim)
-        Mn = (Ra * Ean).max(dim=2)[0]   # max pool
+        Mn = (Ra * Ean).max(dim=2)[0]    # max pooling
         # self representation (bz, seq_len, embed_dim)
         Rn = self.node_embedding(X)
         # self node weight  (bz, seq_len, 1)

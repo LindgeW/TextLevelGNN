@@ -7,6 +7,7 @@
 # Dataset: https://github.com/yao8839836/text_gcn/tree/master/data
 
 import os
+import torch
 import numpy as np
 from utils.instance import Instance
 
@@ -23,12 +24,14 @@ def load_data(data_path):
 
 
 class DataSet(object):
-    def __init__(self, insts, transform=None):
+    def __init__(self, insts, vocabs=None, transform=None):
         if isinstance(insts, str):
             self.insts = load_data(insts)
         else:
             self.insts = insts
+
         self.transform = transform
+        self.vocabs = vocabs
 
     def from_file(self, file):
         self.insts = load_data(file)
@@ -41,8 +44,10 @@ class DataSet(object):
 
     def __getitem__(self, idx):
         sample = self.insts[idx]
+
         if self.transform:
             sample = self.transform(sample)
+
         return sample
 
     def __iter__(self):
@@ -86,7 +91,7 @@ class DataLoader(object):
         for idx in idxs:
             batch.append(self.dataset[idx])
             if len(batch) == self.batch_size:
-                if self.collate_fn:  # 如: 对齐和tensor化
+                if self.collate_fn:  # 如: 对齐或tensor化
                     yield self.collate_fn(batch)
                 else:
                     yield batch
@@ -101,4 +106,12 @@ class DataLoader(object):
     def __len__(self):
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
+
+def collate_fn(batch):
+    max_len = max(len(x.wids) for x in batch)
+    batch_wids = [x.wids + [0] * (max_len-len(x.wids)) for x in batch]
+    batch_lids = [y.lid for y in batch]
+    batch_wids = torch.tensor(batch_wids, dtype=torch.long)
+    batch_lids = torch.tensor(batch_lids, dtype=torch.long)
+    return batch_wids, batch_lids
 
